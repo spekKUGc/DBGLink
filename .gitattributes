@@ -1,0 +1,3 @@
+DotNetPlugin.Impl/DotNetPlugin.Impl.csproj merge=ours
+DotNetPlugin.Stub/PluginMain.cs merge=ours
+DotNetPlugin.Stub/Attributes.DllExport.cs merge=ours

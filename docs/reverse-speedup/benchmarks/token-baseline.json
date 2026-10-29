@@ -1,0 +1,251 @@
+{
+  "schemaVersion": 1,
+  "tool": "token-baseline",
+  "mockFingerprint": "2996dced1f4e7018e6914348e61e5b54dc15e8ec7225afe10c877ca617130738",
+  "tools": [
+    {
+      "name": "GetServerStatus",
+      "arguments": {},
+      "requestChars": 41,
+      "responseChars": 910,
+      "requestTokens": 11,
+      "responseTokens": 292,
+      "totalTokens": 303
+    },
+    {
+      "name": "GetAnalysisSnapshot",
+      "arguments": {
+        "maxFrames": 8,
+        "instructionBytes": 64,
+        "stackBytes": 64,
+        "includeModules": true
+      },
+      "requestChars": 118,
+      "responseChars": 1501,
+      "requestTokens": 29,
+      "responseTokens": 500,
+      "totalTokens": 529
+    },
+    {
+      "name": "TraceUntil",
+      "arguments": {
+        "count": 1,
+        "kind": "into",
+        "includeModules": false
+      },
+      "requestChars": 82,
+      "responseChars": 998,
+      "requestTokens": 21,
+      "responseTokens": 325,
+      "totalTokens": 346
+    },
+    {
+      "name": "ReadMemAtAddress",
+      "arguments": {
+        "address": "0x140001000",
+        "byteCount": 256
+      },
+      "requestChars": 81,
+      "responseChars": 564,
+      "requestTokens": 23,
+      "responseTokens": 318,
+      "totalTokens": 341
+    },
+    {
+      "name": "InspectAddressStructure",
+      "arguments": {
+        "address": "0x140001000",
+        "pointerCount": 4
+      },
+      "requestChars": 89,
+      "responseChars": 268,
+      "requestTokens": 22,
+      "responseTokens": 88,
+      "totalTokens": 110
+    },
+    {
+      "name": "GetBacktrace",
+      "arguments": {
+        "maxFrames": 8
+      },
+      "requestChars": 51,
+      "responseChars": 826,
+      "requestTokens": 14,
+      "responseTokens": 316,
+      "totalTokens": 330
+    },
+    {
+      "name": "ListThreads",
+      "arguments": {
+        "maxItems": 16
+      },
+      "requestChars": 50,
+      "responseChars": 323,
+      "requestTokens": 13,
+      "responseTokens": 120,
+      "totalTokens": 133
+    },
+    {
+      "name": "GetMemoryMap",
+      "arguments": {
+        "maxItems": 32
+      },
+      "requestChars": 51,
+      "responseChars": 1109,
+      "requestTokens": 14,
+      "responseTokens": 352,
+      "totalTokens": 366
+    },
+    {
+      "name": "InspectFunction",
+      "arguments": {
+        "function": "main"
+      },
+      "requestChars": 58,
+      "responseChars": 1365,
+      "requestTokens": 12,
+      "responseTokens": 514,
+      "totalTokens": 526
+    },
+    {
+      "name": "AnalyzeFunctions",
+      "arguments": {
+        "functions": [
+          "main",
+          "0x140001040",
+          "0x140001080"
+        ],
+        "maxItems": 8
+      },
+      "requestChars": 103,
+      "responseChars": 4263,
+      "requestTokens": 30,
+      "responseTokens": 1611,
+      "totalTokens": 1641
+    },
+    {
+      "name": "DecompileModule",
+      "arguments": {
+        "maxFunctions": 8
+      },
+      "requestChars": 57,
+      "responseChars": 3503,
+      "requestTokens": 15,
+      "responseTokens": 1361,
+      "totalTokens": 1376
+    },
+    {
+      "name": "ListFunctions",
+      "arguments": {
+        "maxItems": 16
+      },
+      "requestChars": 52,
+      "responseChars": 978,
+      "requestTokens": 13,
+      "responseTokens": 344,
+      "totalTokens": 357
+    },
+    {
+      "name": "ListSymbols",
+      "arguments": {
+        "kind": "both",
+        "maxItems": 16
+      },
+      "requestChars": 64,
+      "responseChars": 2617,
+      "requestTokens": 17,
+      "responseTokens": 725,
+      "totalTokens": 742
+    },
+    {
+      "name": "Xrefs",
+      "arguments": {
+        "address": "0x140001000",
+        "direction": "both",
+        "maxItems": 8
+      },
+      "requestChars": 86,
+      "responseChars": 1085,
+      "requestTokens": 25,
+      "responseTokens": 342,
+      "totalTokens": 367
+    },
+    {
+      "name": "CallGraph",
+      "arguments": {
+        "maxNodes": 16,
+        "maxEdges": 64
+      },
+      "requestChars": 62,
+      "responseChars": 655,
+      "requestTokens": 18,
+      "responseTokens": 265,
+      "totalTokens": 283
+    },
+    {
+      "name": "GetInvestigationBrief",
+      "arguments": {
+        "function": "main"
+      },
+      "requestChars": 64,
+      "responseChars": 2883,
+      "requestTokens": 14,
+      "responseTokens": 952,
+      "totalTokens": 966
+    },
+    {
+      "name": "Triage",
+      "arguments": {
+        "kind": "imports",
+        "top": 16
+      },
+      "requestChars": 57,
+      "responseChars": 1578,
+      "requestTokens": 16,
+      "responseTokens": 413,
+      "totalTokens": 429
+    },
+    {
+      "name": "GetAnalysisQueue",
+      "arguments": {
+        "limit": 8
+      },
+      "requestChars": 51,
+      "responseChars": 833,
+      "requestTokens": 13,
+      "responseTokens": 250,
+      "totalTokens": 263
+    },
+    {
+      "name": "ListAnalysisSessions",
+      "arguments": {},
+      "requestChars": 46,
+      "responseChars": 103,
+      "requestTokens": 11,
+      "responseTokens": 24,
+      "totalTokens": 35
+    }
+  ],
+  "schema": {
+    "comprehensive": {
+      "chars": 34520,
+      "tokens": 8200
+    },
+    "lean": {
+      "chars": 34520,
+      "tokens": 8200
+    },
+    "wire": {
+      "chars": 37585,
+      "tokens": 8871
+    }
+  },
+  "totals": {
+    "calls": 19,
+    "requestChars": 1263,
+    "responseChars": 26362,
+    "requestTokens": 331,
+    "responseTokens": 9112,
+    "totalTokens": 9443
+  }
+}

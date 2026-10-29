@@ -1,0 +1,39 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net10.0</TargetFramework>
+    <LangVersion>latest</LangVersion>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <AssemblyName>DbgLink.Server</AssemblyName>
+    <RootNamespace>DbgLink.Server</RootNamespace>
+    <OutputPath>..\..\..\bin\$(Configuration)\DbgLink.Server\</OutputPath>
+    <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
+    <!-- NuGet audit stays enabled (SDK default). Only the Microsoft.Bcl.Memory
+         9.0.4 advisory (GHSA-73j8-2gch-69rq) is suppressed: it affects the
+         pre-.NET-Core polyfill path, which is not used on net10, and no fixed
+         stable version exists (only 11.0 previews). Revisit on every
+         Microsoft.ML.Tokenizers upgrade. -->
+  </PropertyGroup>
+
+  <ItemGroup>
+    <NuGetAuditSuppress Include="https://github.com/advisories/GHSA-73j8-2gch-69rq" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+    <PackageReference Include="ModelContextProtocol.AspNetCore" Version="2.2.0" />
+    <PackageReference Include="Microsoft.ML.Tokenizers" Version="2.0.0" />
+    <PackageReference Include="Microsoft.ML.Tokenizers.Data.Cl100kBase" Version="2.0.0" />
+    <Compile Include="..\..\shared\DbgLinkConfigPath.cs" Link="Shared\DbgLinkConfigPath.cs" />
+    <Compile Include="..\..\shared\DbgLinkNativePipe.cs" Link="Shared\DbgLinkNativePipe.cs" />
+    <Compile Include="..\..\shared\BoundedLineReader.cs" Link="Shared\BoundedLineReader.cs" />
+    <Compile Include="..\..\shared\JsonProtocolValidation.cs" Link="Shared\JsonProtocolValidation.cs" />
+    <Compile Include="..\..\shared\BridgeEnvelope.cs" Link="Shared\BridgeEnvelope.cs" />
+    <Compile Include="..\..\shared\PathSafety.cs" Link="Shared\PathSafety.cs" />
+    <Compile Include="..\..\shared\EndpointOwnership.cs" Link="Shared\EndpointOwnership.cs" />
+    <AssemblyAttribute Include="System.Runtime.CompilerServices.InternalsVisibleToAttribute">
+      <_Parameter1>DbgLink.Tests</_Parameter1>
+    </AssemblyAttribute>
+  </ItemGroup>
+</Project>

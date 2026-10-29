@@ -1,0 +1,22 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  "mcp": {
+    "timeout": {
+      "startup": 45000,
+      "catalog": 30000
+    },
+    "servers": {
+      "dbglink": {
+        "type": "remote",
+        "url": "http://127.0.0.1:50301/mcp",
+        "headers": {
+          "Authorization": "Bearer {env:DBGLINK_BEARER_TOKEN}"
+        },
+        "oauth": false,
+        "timeout": {
+          "catalog": 60000
+        }
+      }
+    }
+  }
+}

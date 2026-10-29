@@ -1,0 +1,36 @@
+/*
+ * DBGLink Ghidra extension build.
+ * The Ghidra distribution supplies the Gradle build logic and API jars.
+ */
+
+def ghidraInstallDir = null
+// The explicit -PGHIDRA_INSTALL_DIR wins: the build tool resolves the
+// installation for this run, while the environment variables can still
+// point at an older Ghidra install and would silently win otherwise.
+if (project.hasProperty('GHIDRA_INSTALL_DIR')) {
+    ghidraInstallDir = project.getProperty('GHIDRA_INSTALL_DIR')
+}
+if (!ghidraInstallDir) {
+    ghidraInstallDir = System.getenv('GHIDRA_INSTALL_DIR')
+}
+if (!ghidraInstallDir) {
+    ghidraInstallDir = System.getenv('DBGLINK_GHIDRA_HOME')
+}
+if (!ghidraInstallDir) {
+    throw new GradleException('Set GHIDRA_INSTALL_DIR or DBGLINK_GHIDRA_HOME to the Ghidra installation directory.')
+}
+
+defaultTasks 'distributeExtension'
+
+task distributeExtension {
+    group = 'Ghidra'
+    apply from: new File(ghidraInstallDir).getCanonicalPath() + '/support/buildExtension.gradle'
+    dependsOn ':buildExtension'
+}
+
+tasks.register('formattingChecks', JavaExec) {
+    dependsOn testClasses
+    classpath = sourceSets.test.runtimeClasspath
+    mainClass = 'dbglink.ghidra.GhidraFormattingChecks'
+}
+tasks.named('buildExtension') { dependsOn 'formattingChecks' }

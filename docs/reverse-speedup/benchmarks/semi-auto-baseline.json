@@ -1,0 +1,40 @@
+{
+  "schemaVersion": 1,
+  "scenario": "manual-reverse-fixture",
+  "policy": "inspect-prove-annotate",
+  "mockFingerprint": "aeb0b7c2c454bbd8",
+  "functions": [
+    "FixtureCallee",
+    "FixtureCaller",
+    "FixtureImportedPid"
+  ],
+  "calls": 10,
+  "callsPerFunction": 3.3333333333333335,
+  "requestChars": 1272,
+  "responseChars": 5819,
+  "tokensEstimate": 2293,
+  "tokensPerFunction": 764.3333333333334,
+  "wallMs": 434,
+  "wallMsPerFunction": 144.66666666666666,
+  "matchedProbes": 3,
+  "perFunction": [
+    {
+      "function": "FixtureCallee",
+      "calls": 3,
+      "tokens": 696,
+      "wallMs": 56
+    },
+    {
+      "function": "FixtureCaller",
+      "calls": 3,
+      "tokens": 692,
+      "wallMs": 4
+    },
+    {
+      "function": "FixtureImportedPid",
+      "calls": 3,
+      "tokens": 694,
+      "wallMs": 4
+    }
+  ]
+}

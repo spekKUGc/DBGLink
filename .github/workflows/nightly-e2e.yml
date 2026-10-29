@@ -1,0 +1,261 @@
+name: Nightly E2E
+
+# Live verification that CI does not run: the three tools/verify-*.ps1 scripts
+# need a real x64dbg/x32dbg, a real Ghidra distribution, and a staged
+# artifacts/current bundle, so they only run here (nightly + manual dispatch).
+# See docs/verification.md ("Nightly E2E (CI)") for the runbook.
+# NOTE: local runs are not supported for this workflow file (no runner here);
+# it is verified by reading only. It executes in GitHub Actions.
+
+"on":
+  schedule:
+    - cron: "0 2 * * *"
+  workflow_dispatch:
+    inputs:
+      architecture:
+        description: "verify-e2e.ps1 architecture check(s)"
+        required: false
+        default: "both"
+        type: choice
+        options:
+          - both
+          - x64
+          - x86
+      e2e_port:
+        description: "Base MCP port (overrides E2E_PORT var/secret)"
+        required: false
+        default: "50301"
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: nightly-e2e
+  cancel-in-progress: false
+
+env:
+  E2E_PORT: ${{ inputs.e2e_port || vars.E2E_PORT || secrets.E2E_PORT || '50301' }}
+  GHIDRA_VERSION: "12.1.3"
+  GHIDRA_BUILD_DATE: "20260817"
+  # C-1: official SHA-256 of ghidra_12.1.3_PUBLIC_20260817.zip (release notes +
+  # release-asset digest). Verified before unpack; repin on every Ghidra bump.
+  GHIDRA_SHA256: "93a5d11a9ad510622acaaf908c556a7b9b764d338e78a7567f3689bf5081fd54"
+
+jobs:
+  nightly-e2e:
+    name: Nightly live verification (${{ matrix.architecture }})
+    runs-on: windows-latest
+    timeout-minutes: 360
+    strategy:
+      fail-fast: false
+      matrix:
+        # Both architectures by default. The dispatch input narrows the matrix
+        # to one architecture without skipping the other in a failing run.
+        architecture: ${{ fromJSON(inputs.architecture == 'x64' && '["x64"]' || inputs.architecture == 'x86' && '["x86"]' || '["x64","x86"]') }}
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+
+      - uses: microsoft/setup-msbuild@6fb02220983dee41ce7ae257b6f4d8f9bf5ed4ce # v2
+
+      - uses: actions/setup-dotnet@67a3573c9a986a3f9c594539f4ab511d57bb3ce9 # v4
+        with:
+          dotnet-version: 10.0.x
+
+      - uses: actions/setup-java@cf277c60eb25467037889841efdb72551f06f6c3 # v4
+        with:
+          distribution: temurin
+          java-version: "21"
+
+      - name: Build test fixtures
+        timeout-minutes: 15
+        run: |
+          msbuild tests/fixtures/AnalysisTarget.vcxproj /t:Build /p:Configuration=Release /p:Platform=x64 /m /v:minimal
+          msbuild tests/fixtures/AnalysisTarget.vcxproj /t:Build /p:Configuration=Release /p:Platform=Win32 /m /v:minimal
+          msbuild tests/fixtures/HostileStressTarget.vcxproj /t:Build /p:Configuration=Release /p:Platform=x64 /m /v:minimal
+          msbuild tests/fixtures/HardenedStressTarget.vcxproj /t:Build /p:Configuration=Release /p:Platform=x64 /m /v:minimal
+
+      - name: Build managed solution filter
+        timeout-minutes: 15
+        run: dotnet build DbgLink.Managed.slnf --configuration Release
+
+      - name: Run managed tests (trx)
+        timeout-minutes: 20
+        run: dotnet test tests/DbgLink.Tests/DbgLink.Tests.csproj --configuration Release --logger "trx;LogFileName=managed.trx" --results-directory artifacts/test-results
+
+      - name: Build native x64 and Win32
+        timeout-minutes: 20
+        run: |
+          msbuild src/native/DbgLink.Native/DbgLink.Native.vcxproj /t:Build /p:Configuration=Release /p:Platform=x64 /m /v:minimal
+          msbuild src/native/DbgLink.Native/DbgLink.Native.vcxproj /t:Build /p:Configuration=Release /p:Platform=Win32 /m /v:minimal
+
+      - name: Build native JSON test harness and run it
+        timeout-minutes: 20
+        run: |
+          msbuild tests/DbgLink.Native.Tests/DbgLink.Native.Tests.vcxproj /t:Build /p:Configuration=Release /p:Platform=x64 /m /v:minimal
+          bin\native-tests\x64\Release\DbgLink.Native.Json.Tests.exe
+          msbuild tests/DbgLink.Native.Tests/DbgLink.Native.Tests.vcxproj /t:Build /p:Configuration=Release /p:Platform=Win32 /m /v:minimal
+          bin\native-tests\Win32\Release\DbgLink.Native.Json.Tests.exe
+
+      - name: Cache Ghidra distribution
+        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
+        with:
+          path: ${{ github.workspace }}\ghidra-dist
+          key: ghidra-${{ env.GHIDRA_VERSION }}-${{ env.GHIDRA_BUILD_DATE }}
+
+      - name: Download and unpack Ghidra
+        timeout-minutes: 30
+        shell: pwsh
+        run: |
+          $zip = "ghidra_${env:GHIDRA_VERSION}_PUBLIC_${env:GHIDRA_BUILD_DATE}.zip"
+          $url = "https://github.com/NationalSecurityAgency/ghidra/releases/download/Ghidra_${env:GHIDRA_VERSION}_build/$zip"
+          # C-1: verify before expand/exec — fail closed on hash mismatch or a
+          # missing pin, so a compromised mirror cannot smuggle code into the run.
+          if ([string]::IsNullOrWhiteSpace($env:GHIDRA_SHA256)) {
+            throw "GHIDRA_SHA256 is not pinned; refusing to unpack an unverified Ghidra distribution."
+          }
+          if (-not (Test-Path $zip)) {
+            Invoke-WebRequest -Uri $url -OutFile $zip
+          }
+          $actualSha256 = (Get-FileHash -Algorithm SHA256 -LiteralPath $zip).Hash.ToLowerInvariant()
+          if ($actualSha256 -cne $env:GHIDRA_SHA256.ToLowerInvariant()) {
+            throw "Ghidra zip SHA256 mismatch: expected $($env:GHIDRA_SHA256), got $actualSha256."
+          }
+          Expand-Archive -Path $zip -DestinationPath "ghidra-dist" -Force
+          $ghidraHome = Get-ChildItem "ghidra-dist" -Directory | Select-Object -First 1 -ExpandProperty FullName
+          Add-Content -Path $env:GITHUB_ENV -Value "DBGLINK_GHIDRA_HOME=$ghidraHome"
+
+      - name: Build Ghidra extension (compile, checks, distribute)
+        timeout-minutes: 30
+        shell: pwsh
+        run: |
+          $wrapper = Join-Path $env:DBGLINK_GHIDRA_HOME "support\gradle\gradlew.bat"
+          powershell -NoProfile -ExecutionPolicy Bypass -File tools/run-gradle.ps1 `
+            -WrapperPath $wrapper `
+            -ProjectPath src/ghidra/GhidraBridge `
+            -GhidraHome $env:DBGLINK_GHIDRA_HOME
+
+      - name: Upload Ghidra extension
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: GhidraBridge-nightly-${{ matrix.architecture }}
+          path: src/ghidra/GhidraBridge/dist/*.zip
+          if-no-files-found: error
+
+      - name: Download x64dbg snapshot (rolling release)
+        timeout-minutes: 10
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $release = Invoke-RestMethod -Uri 'https://api.github.com/repos/x64dbg/x64dbg/releases/tags/snapshot'
+          $asset = @($release.assets | Where-Object { $_.name -like 'snapshot_*.zip' -and $_.name -notlike 'symbols-*' })[0]
+          if ($null -eq $asset) { throw 'No x64dbg snapshot asset found via the GitHub API.' }
+          # C-1: the snapshot tag is rolling so its bytes cannot be pinned. Verify
+          # the download against the sha256 digest the GitHub release API reports
+          # for the selected asset (same authenticated response that chose it) and
+          # fail closed when the API provides no digest. The verified hash is also
+          # recorded for auditability.
+          if ([string]$asset.digest -notmatch '^sha256:([0-9a-fA-F]{64})$') {
+            throw 'The x64dbg snapshot asset provides no sha256 digest; refusing to unpack an unverified executable.'
+          }
+          $expectedSnapshot = $Matches[1].ToLowerInvariant()
+          $zip = Join-Path $env:RUNNER_TEMP $asset.name
+          if (-not (Test-Path -LiteralPath $zip)) {
+            Invoke-WebRequest -Uri $asset.browser_download_url -OutFile $zip
+          }
+          $actualSnapshot = (Get-FileHash -Algorithm SHA256 -LiteralPath $zip).Hash.ToLowerInvariant()
+          if ($actualSnapshot -cne $expectedSnapshot) {
+            throw "x64dbg snapshot SHA256 mismatch: expected $expectedSnapshot, got $actualSnapshot."
+          }
+          "$actualSnapshot  $($asset.name)" | Set-Content -LiteralPath (Join-Path $env:RUNNER_TEMP 'x64dbg-snapshot.SHA256SUMS') -Encoding utf8NoBOM
+          $dest = Join-Path $env:RUNNER_TEMP 'x64dbg'
+          if (Test-Path -LiteralPath $dest) { Remove-Item -LiteralPath $dest -Recurse -Force }
+          Expand-Archive -LiteralPath $zip -DestinationPath $dest -Force
+          $x64 = Get-ChildItem -LiteralPath $dest -Recurse -Filter 'x64dbg.exe' -File | Select-Object -First 1 -ExpandProperty FullName
+          $x32 = Get-ChildItem -LiteralPath $dest -Recurse -Filter 'x32dbg.exe' -File | Select-Object -First 1 -ExpandProperty FullName
+          if (-not $x64 -or -not $x32) { throw "x64dbg.exe/x32dbg.exe were not found under $dest." }
+          Add-Content -Path $env:GITHUB_ENV -Value "DBGLINK_X64DBG_PATH=$x64"
+          Add-Content -Path $env:GITHUB_ENV -Value "DBGLINK_X32DBG_PATH=$x32"
+
+      - name: Stage self-contained package (artifacts/current)
+        timeout-minutes: 15
+        shell: pwsh
+        run: |
+          dotnet publish src/mcp/DbgLink.Server/DbgLink.Server.csproj --configuration Release --runtime win-x64 --self-contained true --output bin/publish/DbgLink.Server -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true -p:DebugType=None -p:DebugSymbols=false
+          dotnet publish src/launcher/DbgLink.Launcher.Cli/DbgLink.Launcher.Cli.csproj --configuration Release --runtime win-x64 --self-contained true --output bin/publish/DbgLink.Launcher.Cli -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true -p:DebugType=None -p:DebugSymbols=false
+          powershell -NoProfile -ExecutionPolicy Bypass -File tools/package.ps1 -Configuration Release
+
+      - name: Run live E2E (x64dbg + Ghidra + fixtures)
+        timeout-minutes: 150
+        shell: pwsh
+        run: |
+          powershell -NoProfile -ExecutionPolicy Bypass -File tools/verify-e2e.ps1 `
+            -AnalysisFixtures `
+            -KeepInstalled `
+            -Port $env:E2E_PORT `
+            -Architecture ${{ matrix.architecture }} `
+            -X64DbgPath $env:DBGLINK_X64DBG_PATH `
+            -X32DbgPath $env:DBGLINK_X32DBG_PATH `
+            -GhidraHome $env:DBGLINK_GHIDRA_HOME
+
+      - name: Run static headless integration
+        if: matrix.architecture == 'x64'
+        timeout-minutes: 60
+        shell: pwsh
+        run: |
+          powershell -NoProfile -ExecutionPolicy Bypass -File tools/verify-static.ps1 `
+            -KeepRunDir `
+            -GhidraHome $env:DBGLINK_GHIDRA_HOME
+
+      - name: Run session-lifetime check against a fresh MCP server
+        if: matrix.architecture == 'x64'
+        timeout-minutes: 30
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $lifetimePort = [int]$env:E2E_PORT
+          $target = Join-Path $env:GITHUB_WORKSPACE 'artifacts\fixtures\x64\AnalysisTarget.exe'
+          $launcher = Join-Path $env:GITHUB_WORKSPACE 'artifacts\current\launcher\DbgLink.Launcher.Cli.exe'
+          $verifyDir = Join-Path $env:GITHUB_WORKSPACE 'artifacts\verification'
+          New-Item -ItemType Directory -Path $verifyDir -Force | Out-Null
+          $stdout = Join-Path $verifyDir 'lifetime-server.stdout.log'
+          $stderr = Join-Path $verifyDir 'lifetime-server.stderr.log'
+          $shutdown = Join-Path $verifyDir 'lifetime.shutdown'
+          if (Test-Path -LiteralPath $shutdown) { Remove-Item -LiteralPath $shutdown -Force }
+          $launcherArgs = @('--input', $target, '--port', "$lifetimePort", '--json', '--shutdown-file', $shutdown,
+            '--x64dbg', $env:DBGLINK_X64DBG_PATH, '--x32dbg', $env:DBGLINK_X32DBG_PATH,
+            '--ghidra-home', $env:DBGLINK_GHIDRA_HOME)
+          $proc = Start-Process -FilePath $launcher -ArgumentList $launcherArgs `
+            -WorkingDirectory (Split-Path -Parent $launcher) `
+            -RedirectStandardOutput $stdout -RedirectStandardError $stderr `
+            -WindowStyle Hidden -PassThru
+          try {
+            $deadline = [DateTime]::UtcNow.AddMinutes(10)
+            $ready = $false
+            while ([DateTime]::UtcNow -lt $deadline) {
+              if ($proc.HasExited) { throw "Lifetime MCP server exited before ready (code $($proc.ExitCode))." }
+              $log = Get-Content -LiteralPath $stdout -Raw -ErrorAction SilentlyContinue
+              if ($log -match '"type"\s*:\s*"ready"') { $ready = $true; break }
+              Start-Sleep -Seconds 2
+            }
+            if (-not $ready) { throw 'Lifetime MCP server did not become ready within 10 minutes.' }
+            powershell -NoProfile -ExecutionPolicy Bypass -File tools/verify-session-lifetime.ps1 `
+              -TargetPath $target -Port $lifetimePort `
+              -LogPath (Join-Path $verifyDir 'lifetime.jsonl')
+          } finally {
+            if (-not $proc.HasExited) {
+              [IO.File]::WriteAllText($shutdown, "stop`n", [Text.Encoding]::UTF8)
+              if (-not $proc.WaitForExit(30000)) { $proc.Kill() }
+            }
+          }
+
+      - name: Upload nightly verification logs
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: nightly-e2e-logs-${{ matrix.architecture }}
+          path: |
+            artifacts/verification/
+            artifacts/.e2e-backup/
+            artifacts/test-results/*.trx
+          if-no-files-found: warn

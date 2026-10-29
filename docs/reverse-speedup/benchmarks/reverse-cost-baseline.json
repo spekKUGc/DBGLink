@@ -1,0 +1,33 @@
+{
+  "schemaVersion": 1,
+  "scenario": "annotate-fixture-functions",
+  "policy": "naive-per-function",
+  "mockFingerprint": "8777719dab320fd6d5d65d402ed888e73804c445b96054f8d5eb88c1fb8fea04",
+  "functions": [
+    "FixtureCaller",
+    "FixtureCallee",
+    "FixtureImportedPid"
+  ],
+  "calls": 9,
+  "callsPerFunction": 3,
+  "requestChars": 901,
+  "responseChars": 5088,
+  "tokensEstimate": 2007,
+  "perFunction": [
+    {
+      "function": "FixtureCaller",
+      "calls": 3,
+      "tokens": 695
+    },
+    {
+      "function": "FixtureCallee",
+      "calls": 3,
+      "tokens": 647
+    },
+    {
+      "function": "FixtureImportedPid",
+      "calls": 3,
+      "tokens": 665
+    }
+  ]
+}

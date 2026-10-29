@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!-- Coverage gate settings for DbgLink.Tests (see docs/verification.md § Coverage gate).
+     Calibrated 2026-10-09: line-coverage baseline measured on merged main
+     (74.7% total: DbgLink.Server 80.0%, DbgLink.Launcher.Core 55.8%);
+     Threshold 72 is ~2.7 pp below the measured value so genuine regressions
+     fail the run while ordinary churn does not. Recalibrate if the product
+     surface changes materially (see docs/verification.md § Coverage gate). -->
+<RunSettings>
+  <DataCollectionRunSettings>
+    <DataCollectors>
+      <DataCollector friendlyName="XPlat Code Coverage">
+        <Configuration>
+          <Format>cobertura</Format>
+          <!-- Include only product assemblies; test assembly and harnesses excluded below. -->
+          <Include>[DbgLink.Server]*,[DbgLink.Launcher.Core]*</Include>
+          <Exclude>[DbgLink.Tests]*</Exclude>
+          <ExcludeByAttribute>Obsolete,GeneratedCodeAttribute,CompilerGeneratedAttribute</ExcludeByAttribute>
+          <ExcludeByFile>**/tests/DbgLink.Tests/**,**/*.g.cs,**/*.g.i.cs</ExcludeByFile>
+          <Threshold>72</Threshold>
+          <ThresholdType>Line</ThresholdType>
+          <ThresholdStat>Total</ThresholdStat>
+        </Configuration>
+      </DataCollector>
+    </DataCollectors>
+  </DataCollectionRunSettings>
+</RunSettings>

@@ -1,0 +1,8 @@
+EXPORTS
+    TargetBanner
+    FixtureObfuscatedStrings
+    FixtureStateMachineDispatcher
+    FixtureIndirectCall
+    FixtureDeepRecursion
+    FixtureGetCyclicStructure
+    FixtureSpawnWorker

@@ -1,0 +1,26 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <LangVersion>latest</LangVersion>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <AssemblyName>DbgLink.Launcher.Core</AssemblyName>
+    <RootNamespace>DbgLink.Launcher.Core</RootNamespace>
+</PropertyGroup>
+
+  <ItemGroup>
+    <AssemblyAttribute Include="System.Runtime.CompilerServices.InternalsVisibleToAttribute">
+      <_Parameter1>DbgLink.Tests</_Parameter1>
+    </AssemblyAttribute>
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Include="..\..\shared\DbgLinkConfigPath.cs" Link="Shared\DbgLinkConfigPath.cs" />
+    <Compile Include="..\..\shared\DbgLinkNativePipe.cs" Link="Shared\DbgLinkNativePipe.cs" />
+    <Compile Include="..\..\shared\BoundedLineReader.cs" Link="Shared\BoundedLineReader.cs" />
+    <Compile Include="..\..\shared\JsonProtocolValidation.cs" Link="Shared\JsonProtocolValidation.cs" />
+    <Compile Include="..\..\shared\BridgeEnvelope.cs" Link="Shared\BridgeEnvelope.cs" />
+    <Compile Include="..\..\shared\PathSafety.cs" Link="Shared\PathSafety.cs" />
+    <Compile Include="..\..\shared\EndpointOwnership.cs" Link="Shared\EndpointOwnership.cs" />
+  </ItemGroup>
+</Project>

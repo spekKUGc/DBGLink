@@ -1,0 +1,11 @@
+{
+  "solution": {
+    "path": "DbgLink.sln",
+    "projects": [
+      "src\\mcp\\DbgLink.Server\\DbgLink.Server.csproj",
+      "src\\launcher\\DbgLink.Launcher.Core\\DbgLink.Launcher.Core.csproj",
+      "src\\launcher\\DbgLink.Launcher.Cli\\DbgLink.Launcher.Cli.csproj",
+      "tests\\DbgLink.Tests\\DbgLink.Tests.csproj"
+    ]
+  }
+}

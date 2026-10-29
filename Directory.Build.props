@@ -1,0 +1,19 @@
+<Project>
+  <PropertyGroup>
+    <!-- Directory.Build.props is imported before SDK defaults are finalized, so set
+         the common defaults here to keep later property evaluation stable. -->
+    <Configuration Condition="'$(Configuration)'==''">Debug</Configuration>
+    <Platform Condition="'$(Platform)'==''">x64</Platform>
+    <VersionPrefix Condition="'$(VersionPrefix)'==''">0.12.0</VersionPrefix>
+    <Version Condition="'$(Version)'==''">$(VersionPrefix)</Version>
+    <AssemblyVersion Condition="'$(AssemblyVersion)'==''">$(VersionPrefix)</AssemblyVersion>
+    <FileVersion Condition="'$(FileVersion)'==''">$(VersionPrefix)</FileVersion>
+    <InformationalVersion Condition="'$(InformationalVersion)'==''">$(Version)</InformationalVersion>
+
+    <!-- Reproducible restores: every SDK-style project writes/updates
+         packages.lock.json next to its project file (see B-2). Native vcxproj
+         and Gradle builds have no NuGet/PackageReference graph, so the
+         property is inert for them (documented in README). -->
+    <RestorePackagesWithLockFile>true</RestorePackagesWithLockFile>
+  </PropertyGroup>
+</Project>

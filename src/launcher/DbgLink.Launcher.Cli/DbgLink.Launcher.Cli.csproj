@@ -1,0 +1,16 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net10.0</TargetFramework>
+    <LangVersion>latest</LangVersion>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <AssemblyName>DbgLink.Launcher.Cli</AssemblyName>
+    <RootNamespace>DbgLink.Launcher.Cli</RootNamespace>
+    <ApplicationIcon>Assets\DbgLink.ico</ApplicationIcon>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\DbgLink.Launcher.Core\DbgLink.Launcher.Core.csproj" />
+  </ItemGroup>
+</Project>

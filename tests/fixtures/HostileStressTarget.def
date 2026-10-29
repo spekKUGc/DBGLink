@@ -1,0 +1,6 @@
+EXPORTS
+    HostileBanner
+    FixtureVehControlFlowTrap
+    FixtureSelfDecryptingShell
+    FixtureGetHostileLabyrinth
+    FixtureSpawnHostileThreads

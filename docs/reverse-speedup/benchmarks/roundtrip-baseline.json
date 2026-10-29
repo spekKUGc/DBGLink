@@ -1,0 +1,92 @@
+{
+  "schemaVersion": 1,
+  "harness": "wire",
+  "scenarios": [
+    {
+      "scenario": "annotate-function",
+      "description": "inspect -\u003E annotate (rename\u002Bcomment) one function",
+      "callsPerTask": 2,
+      "calls": [
+        "InspectFunction",
+        "BatchAnnotate"
+      ]
+    },
+    {
+      "scenario": "triage-module",
+      "description": "identity \u002B ranked imports/exports/functions \u002B IOC strings in one map call",
+      "callsPerTask": 1,
+      "calls": [
+        "GetModuleMap"
+      ]
+    },
+    {
+      "scenario": "who-calls-x",
+      "description": "caller/callee reachability around X in one graph call",
+      "callsPerTask": 1,
+      "calls": [
+        "CallGraph"
+      ]
+    },
+    {
+      "scenario": "static-to-live",
+      "description": "map a static function to live with live bytes attached",
+      "callsPerTask": 1,
+      "calls": [
+        "MapStaticFunctionToLive"
+      ]
+    },
+    {
+      "scenario": "open-target-ready",
+      "description": "open a target \u002B status until ready",
+      "callsPerTask": 2,
+      "calls": [
+        "OpenDebugTarget",
+        "GetServerStatus"
+      ]
+    },
+    {
+      "scenario": "function-bytes",
+      "description": "inspect a function \u002B read its static bytes in one batch",
+      "callsPerTask": 1,
+      "calls": [
+        "BatchStaticQueries"
+      ]
+    },
+    {
+      "scenario": "triage-module-batch",
+      "description": "triage strings \u002B imports(includeExports) \u002B symbols \u002B functions in one static batch",
+      "callsPerTask": 1,
+      "calls": [
+        "BatchStaticQueries"
+      ]
+    },
+    {
+      "scenario": "inspect-value-bundle",
+      "description": "snapshot \u002B expressions \u002B ranges in one bundled call",
+      "callsPerTask": 1,
+      "calls": [
+        "GetAnalysisSnapshot"
+      ]
+    },
+    {
+      "scenario": "who-calls-x-both",
+      "description": "xrefs both directions in one call",
+      "callsPerTask": 1,
+      "calls": [
+        "Xrefs"
+      ]
+    },
+    {
+      "scenario": "open-ghidra-longpoll",
+      "description": "open a Ghidra file with default long-poll wait in one call",
+      "callsPerTask": 1,
+      "calls": [
+        "OpenGhidraFile"
+      ]
+    }
+  ],
+  "totals": {
+    "scenarios": 10,
+    "calls": 12
+  }
+}

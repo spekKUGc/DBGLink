@@ -1,0 +1,22 @@
+{
+  "schemaVersion": 1,
+  "scenario": "semi-auto-recipe-fixture",
+  "policy": "brief3-probebatch3-annotate6",
+  "mockFingerprint": "aeb0b7c2c454bbd8",
+  "functions": [
+    "FixtureCallee",
+    "FixtureCaller",
+    "FixtureImportedPid"
+  ],
+  "calls": 4,
+  "callsPerFunction": 1.3333333333333333,
+  "requestChars": 1046,
+  "responseChars": 6357,
+  "tokensEstimate": 2370,
+  "tokensPerFunction": 790,
+  "wallMs": 35,
+  "wallMsPerFunction": 11.666666666666666,
+  "matchedProbes": 3,
+  "committedOps": 6,
+  "staticReadyCount": 3
+}

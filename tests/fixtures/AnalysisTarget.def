@@ -1,0 +1,4 @@
+EXPORTS
+    FixtureCallee
+    FixtureCaller
+    FixtureUnicodePointer DATA
