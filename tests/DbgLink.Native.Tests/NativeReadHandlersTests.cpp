@@ -465,6 +465,33 @@ namespace dbglink_read_tests
         testshim::SetExecDirectResult(false);
         ExpectError(HandleOpenDebugTarget(Req("OpenDebugTarget", "\"path\":\"C:/test/app.exe\""), "7"),
             "The debugger could not open the target.");
+
+        ExpectError(HandleAttachDebugger(Req("AttachDebugger", ""), "7"),
+            "pid must be an integer between 1 and 2147483647.");
+        ExpectError(HandleAttachDebugger(Req("AttachDebugger", "\"pid\":0"), "7"),
+            "pid must be an integer between 1 and 2147483647.");
+        // NOTE: a numeric string coerces via ExtractUnsigned (shared
+        // BoundedUnsigned semantics), so only a non-numeric string proves
+        // the type gate here.
+        ExpectError(HandleAttachDebugger(Req("AttachDebugger", "\"pid\":\"abc\""), "7"),
+            "pid must be an integer between 1 and 2147483647.");
+
+        // The shim accepts the attach command, so the success path
+        // executes without touching any real process.
+        testshim::SetExecDirectResult(true);
+        testshim::ClearExecLog();
+        const std::string attached = HandleAttachDebugger(
+            Req("AttachDebugger", "\"pid\":1234"), "7");
+        ExpectOk(attached);
+        Require(Contains(attached, "\"attached\":true"), "attach must report attached");
+        Require(Contains(attached, "\"pid\":1234"), "attach must echo the pid");
+        Require(testshim::ExecLog().back() == "attach .1234",
+            "attach command contract broken");
+
+        testshim::SetExecDirectResult(false);
+        ExpectError(HandleAttachDebugger(Req("AttachDebugger", "\"pid\":1234"), "7"),
+            "The debugger could not attach to the target process.");
+        testshim::SetExecDirectResult(true);
     }
 
     void WriteLe16(std::vector<unsigned char>& bytes, std::size_t offset, std::uint16_t value)

@@ -147,25 +147,47 @@ internal sealed partial class ToolRegistry
             sessionScope: ToolSessionScope.Global);
     }
 
-    private void RegisterDebugTarget(LiveAnalysisTools live) => Register(new JsonObject
+    private void RegisterDebugTarget(LiveAnalysisTools live)
     {
-        ["name"] = "OpenDebugTarget",
-        ["description"] = "Open a local PE target; auto-selects x32dbg/x64dbg. Replaces the live session.",
-        ["inputSchema"] = new JsonObject
+        Register(new JsonObject
         {
-            ["type"] = "object",
-            ["properties"] = new JsonObject
+            ["name"] = "AttachDebuggerTarget",
+            ["description"] = "Attach to a live process id; auto-selects x32dbg/x64dbg. Replaces the live session.",
+            ["inputSchema"] = new JsonObject
             {
-                ["path"] = NonBlankText("Absolute local drive .exe/.dll path. UNC/ADS/device rejected, must exist; validated before launch.", 32760),
-                ["arguments"] = OptText("Debuggee command line, passed to the debugger init command.", 4096),
-                ["workDir"] = OptText("Working directory for the debuggee; defaults to the executable folder.", 32760),
-                ["architecture"] = ArchitectureRule()
-            },
-            ["required"] = new JsonArray("path"),
-            ["examples"] = new JsonArray(new JsonObject { ["path"] = "C:\\target\\app.exe" }),
-            ["additionalProperties"] = false
-        }
-    },
-        call => live.OpenDebugTargetAsync(call.Arguments, call.CancellationToken), ToolCapability.Mutation, requiresControl: true, lean: true,
-        minimumTimeoutMs: 60_000);
+                ["type"] = "object",
+                ["properties"] = new JsonObject
+                {
+                    ["pid"] = IntRule(0, 1, 2_147_483_647, "Live process id to attach to."),
+                    ["architecture"] = ArchitectureRule()
+                },
+                ["required"] = new JsonArray("pid"),
+                ["examples"] = new JsonArray(new JsonObject { ["pid"] = 1234 }),
+                ["additionalProperties"] = false
+            }
+        },
+            call => live.AttachDebuggerAsync(call.Arguments, call.CancellationToken), ToolCapability.Mutation, requiresControl: true, lean: true,
+            minimumTimeoutMs: 60_000);
+        Register(new JsonObject
+        {
+            ["name"] = "OpenDebugTarget",
+            ["description"] = "Open a local PE target; auto-selects x32dbg/x64dbg. Replaces the live session.",
+            ["inputSchema"] = new JsonObject
+            {
+                ["type"] = "object",
+                ["properties"] = new JsonObject
+                {
+                    ["path"] = NonBlankText("Absolute local drive .exe/.dll path. UNC/ADS/device rejected, must exist; validated before launch.", 32760),
+                    ["arguments"] = OptText("Debuggee command line, passed to the debugger init command.", 4096),
+                    ["workDir"] = OptText("Working directory for the debuggee; defaults to the executable folder.", 32760),
+                    ["architecture"] = ArchitectureRule()
+                },
+                ["required"] = new JsonArray("path"),
+                ["examples"] = new JsonArray(new JsonObject { ["path"] = "C:\\target\\app.exe" }),
+                ["additionalProperties"] = false
+            }
+        },
+            call => live.OpenDebugTargetAsync(call.Arguments, call.CancellationToken), ToolCapability.Mutation, requiresControl: true, lean: true,
+            minimumTimeoutMs: 60_000);
+    }
 }

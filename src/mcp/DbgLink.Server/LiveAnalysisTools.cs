@@ -1,6 +1,7 @@
 using DbgLink.Shared;
 using System.Collections.Concurrent;
 using System.Globalization;
+using System.Runtime.InteropServices;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Nodes;
@@ -198,6 +199,64 @@ internal sealed class LiveAnalysisTools
             JsonSerializer.SerializeToElement(payload),
             cancellationToken).ConfigureAwait(false);
     }
+
+    internal async Task<string> AttachDebuggerAsync(JsonElement? arguments, CancellationToken cancellationToken)
+    {
+        var pid = ToolSupport.ReadArgumentInt(arguments, "pid", 0);
+        if (pid <= 0)
+            return BridgeEnvelope.Error("debug_target_invalid",
+                "pid must be a positive process id. Do not repeat the same call without changing inputs.");
+        var architecture = ToolSupport.ReadArgumentString(arguments, "architecture") ?? "auto";
+        if (string.Equals(architecture.Trim(), "auto", StringComparison.OrdinalIgnoreCase))
+        {
+            architecture = DetectProcessArchitecture(pid);
+            if (architecture is null)
+                return BridgeEnvelope.Error("debug_target_invalid",
+                    $"Could not determine the bitness of pid {pid} (access denied or exited). Pass architecture explicitly: x64 or x86.");
+        }
+        var payload = new JsonObject { ["pid"] = pid };
+        if (_sessions?.Available == true)
+            return await _sessions.AttachDebuggerAsync(payload, architecture, cancellationToken).ConfigureAwait(false);
+        return await ActiveBridge.RequestAsync(
+            "AttachDebugger",
+            JsonSerializer.SerializeToElement(payload),
+            cancellationToken).ConfigureAwait(false);
+    }
+
+    /// <summary>
+    /// Best-effort debugger selection for attach: x64 targets need x64dbg,
+    /// WOW64 targets need x32dbg. Fails closed (null) when the process
+    /// cannot be opened, so the caller asks for an explicit architecture.
+    /// </summary>
+    private static string? DetectProcessArchitecture(int pid)
+    {
+        var handle = OpenProcess(0x0400, false, (uint)pid);
+        if (handle == IntPtr.Zero)
+            return null;
+        try
+        {
+            if (!IsWow64Process(handle, out var wow64))
+                return null;
+            if (!Environment.Is64BitOperatingSystem)
+                return "x86";
+            return wow64 ? "x86" : "x64";
+        }
+        finally
+        {
+            CloseHandle(handle);
+        }
+    }
+
+    [DllImport("kernel32.dll", SetLastError = true)]
+    private static extern IntPtr OpenProcess(uint access, [MarshalAs(UnmanagedType.Bool)] bool inherit, uint pid);
+
+    [DllImport("kernel32.dll", SetLastError = true)]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    private static extern bool IsWow64Process(IntPtr handle, [MarshalAs(UnmanagedType.Bool)] out bool wow64);
+
+    [DllImport("kernel32.dll", SetLastError = true)]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    private static extern bool CloseHandle(IntPtr handle);
 
     internal async Task<string> GetAnalysisSnapshotAsync(JsonElement? arguments, CancellationToken cancellationToken)
     {

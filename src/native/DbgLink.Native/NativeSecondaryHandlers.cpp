@@ -382,4 +382,28 @@ namespace dbglink
         return SuccessResponse(id, result);
     }
 
+    std::string HandleAttachDebugger(const std::string& request, const std::string& id)
+    {
+        const RequestParams params(request);
+        std::uint64_t pid = 0;
+        if (!HasJsonProperty(request, "pid"))
+            return ErrorResponse(id, "pid must be an integer between 1 and 2147483647.");
+        if (auto error = params.BoundedUnsigned("pid", pid, 1, 2147483647,
+                "pid must be an integer between 1 and 2147483647."); !error.empty())
+            return ErrorResponse(id, error);
+        const auto execute = GetDebuggerBridgeFunction<DbgCmdExecDirectFunction>("DbgCmdExecDirect");
+        if (execute == nullptr)
+            return ErrorResponse(id, "The debugger command interface is unavailable.");
+        // Mirrors the debugger's own attach path: attaching replaces any
+        // current debug session first, like init does for a fresh target.
+        // The pid is decimal (x64dbg plain numbers are hex; "." forces
+        // decimal, matching the debugger's own command line handling).
+        const std::string command = "attach ." + std::to_string(pid);
+        const bool attached = execute(command.c_str());
+        if (!attached)
+            return ErrorResponse(id, "The debugger could not attach to the target process.");
+        const nlohmann::json result{{"attached", true}, {"pid", pid}};
+        return SuccessResponse(id, result);
+    }
+
 }

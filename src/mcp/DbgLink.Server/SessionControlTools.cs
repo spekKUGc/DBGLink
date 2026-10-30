@@ -225,6 +225,38 @@ internal sealed class SessionControlTools(IGhidraControlClient? control, Analysi
         return response;
     }
 
+    public async Task<string> AttachDebuggerAsync(JsonObject payload, string architecture, CancellationToken token)
+    {
+        if (payload["pid"]?.GetValue<int>() == Environment.ProcessId)
+            return BridgeEnvelope.Error("debug_target_invalid",
+                "pid must not be the DbgLink server itself. Pass the target process id.");
+        var selection = JsonSerializer.SerializeToElement(new { architecture = SanitizeArchitecture(architecture) });
+        var selected = await SwitchAsync(selection, token).ConfigureAwait(false);
+        var debugger = ReadSuccess(selected);
+        if (debugger is null) return selected;
+        if (debugger["debuggerPid"]?.GetValue<int>() == payload["pid"]?.GetValue<int>())
+            return BridgeEnvelope.Error("debug_target_invalid",
+                "pid must not be the debugger itself. Pass the target process id.");
+        var response = await sessions.Resolve(context.AnalysisId).Bridge.RequestAsync(
+            "AttachDebugger", JsonSerializer.SerializeToElement(payload), token).ConfigureAwait(false);
+        var root = TryParseObject(response);
+        if (root is null)
+            return BridgeEnvelope.Error("session_control_protocol",
+                "The debugger returned a malformed AttachDebugger response. The target may still have attached; poll GetAnalysisSnapshot to confirm.");
+        if (IsOk(root) && root["result"] is JsonObject result)
+        {
+            // An attached target gets a fresh module table (and usually a new
+            // base). Never answer the next map from the pre-attach cache.
+            SessionCaches.InvalidateModuleCaches();
+            result["analysisId"] = context.AnalysisId;
+            result["architecture"] = debugger["architecture"]?.DeepClone();
+            result["debuggerPid"] = debugger["debuggerPid"]?.DeepClone();
+            result["debuggerChanged"] = debugger["changed"]?.DeepClone();
+            return root.ToJsonString();
+        }
+        return response;
+    }
+
     private Task<string> SendAsync(string method, JsonObject payload, CancellationToken token)
         => control is null
             ? Task.FromResult(BridgeEnvelope.Error("session_control_unavailable", "The launcher does not support session control."))

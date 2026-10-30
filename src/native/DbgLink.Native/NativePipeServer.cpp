@@ -235,6 +235,7 @@ namespace dbglink
             {"ReadStringAtAddress", HandleReadString},
             {"GetAllModulesFromMemMap", HandleAllModulesFromMemMap},
             {"OpenDebugTarget", HandleOpenDebugTarget},
+            {"AttachDebugger", HandleAttachDebugger},
             {"SetBreakpoint", HandleSetBreakpoint},
             {"ClearBreakpoint", HandleClearBreakpoint},
             {"ListBreakpoints", HandleListBreakpoints},

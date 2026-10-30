@@ -8,6 +8,7 @@ namespace dbglink
     std::string HandleGetXrefs(const std::string& request, const std::string& id);
     std::string HandleReadString(const std::string& request, const std::string& id);
     std::string HandleOpenDebugTarget(const std::string& request, const std::string& id);
+    std::string HandleAttachDebugger(const std::string& request, const std::string& id);
     std::string HandleModules(const std::string& id, const char* method);
     std::string HandleCurrentContext(const std::string& request, const std::string& id);
     std::string HandleAllRegisters(const std::string& id);
